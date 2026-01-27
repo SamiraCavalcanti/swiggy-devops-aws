@@ -1,0 +1,26 @@
+# Secrets
+*.pem
+*.key
+*.ppk
+
+# IDE
+.vscode/
+.idea/
+*.swp
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# READMEs temporários (criar depois)
+README.md
+devops-projeto-swiggy/README.md
+
+# CONFIG (referência local)
+devops-projeto-swiggy/CONFIG_TODO.md
+
+# GitHub workflows (keep if needed)
+# .github/
