@@ -14,12 +14,13 @@ phases:
   pre_build:
     commands:
       - echo "Installing dependencies..."
-      - cd devops-projeto-swiggy/Swiggy_clone
       - echo "Performing Trivy file scan before building the image..."
+      - cd devops-projeto-swiggy/Swiggy_clone
       - wget https://github.com/aquasecurity/trivy/releases/download/v0.19.2/trivy_0.19.2_Linux-64bit.tar.gz
       - tar zxvf trivy_0.19.2_Linux-64bit.tar.gz
       - export PATH=$PATH:$PWD
       - trivy filesystem --exit-code 0 --no-progress . >> trivyfilescan.txt
+      - cd ../..
       - echo "Downloading and installing OWASP Dependency-Check..."
       - wget https://github.com/jeremylong/DependencyCheck/releases/download/v7.0.2/dependency-check-7.0.2-release.zip
       - unzip dependency-check-7.0.2-release.zip
