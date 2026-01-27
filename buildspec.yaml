@@ -36,6 +36,12 @@ phases:
       - echo "Running tests..."
       - echo "Building Docker image..."
       - cd devops-projeto-swiggy/Swiggy_clone
+      - echo "Sanitizing environment variables..."
+      - export DOCKER_REGISTRY_URL=$(echo "$DOCKER_REGISTRY_URL" | tr -d '\n')
+      - export DOCKER_REGISTRY_USERNAME=$(echo "$DOCKER_REGISTRY_USERNAME" | tr -d '\n')
+      - export DOCKER_REGISTRY_PASSWORD=$(echo "$DOCKER_REGISTRY_PASSWORD" | tr -d '\n')
+      - echo "URL=[$DOCKER_REGISTRY_URL]"
+      - echo "USER=[$DOCKER_REGISTRY_USERNAME]"
       - echo "$DOCKER_REGISTRY_PASSWORD" | docker login -u "$DOCKER_REGISTRY_USERNAME" --password-stdin "$DOCKER_REGISTRY_URL"
       - docker build -t "$DOCKER_REGISTRY_URL/$DOCKER_REGISTRY_USERNAME/swiggy:latest" .
       - docker push "$DOCKER_REGISTRY_URL/$DOCKER_REGISTRY_USERNAME/swiggy:latest"
