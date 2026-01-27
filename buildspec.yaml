@@ -50,10 +50,12 @@ phases:
       - echo "Performing Trivy image scan after building the image..."
       - trivy image "$DOCKER_REGISTRY_USERNAME/swiggy:latest" >> trivyimage.txt
       - echo "Running OWASP Dependency-Check scan..."
+      - cd ../..
       - cd dependency-check/bin
-      - ./dependency-check.sh --scan . --format ALL
+      - ./dependency-check.sh --scan ../../devops-projeto-swiggy/Swiggy_clone --format ALL
       - cd ../..
       - echo "Running SonarQube analysis"
+      - cd devops-projeto-swiggy/Swiggy_clone
       - sonar-scanner -Dsonar.projectKey=swiggy -Dsonar.sources=. -Dsonar.host.url=http://54.226.236.61:9000/ -Dsonar.login=$SONAR_TOKEN
       - echo "Build completed successfully!"
       # OPTIONAL: Descomente a linha abaixo para receber emails de notificação (requer configuração do SES)
