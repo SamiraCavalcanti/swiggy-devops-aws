@@ -16,7 +16,7 @@ phases:
 
   pre_build:
     commands:
-      - echo "=== Pre-build: Security scans (shift-left) ==="
+      - echo "=== PRE_BUILD: Security scans (Shift Left) ==="
 
       - echo "Running Trivy filesystem scan..."
       - cd devops-projeto-swiggy/Swiggy_clone
@@ -32,25 +32,19 @@ phases:
 
       - echo "Running OWASP Dependency-Check scan..."
       - cd dependency-check/bin
-      - ./dependency-check.sh \
-          --scan ../../devops-projeto-swiggy/Swiggy_clone \
-          --format ALL \
-          --nvdApiKey $NVD_API_KEY \
-          --failOnCVSS 11 \
-          --disableRetireJS
+      - ./dependency-check.sh --scan ../../devops-projeto-swiggy/Swiggy_clone --format ALL --nvdApiKey $NVD_API_KEY --failOnCVSS 11 --disableRetireJS
       - cd ../..
 
       - echo "Installing Sonar Scanner..."
       - export SONAR_SCANNER_VERSION=4.7.0.2747
       - export SONAR_SCANNER_HOME=$HOME/.sonar/sonar-scanner-$SONAR_SCANNER_VERSION-linux
-      - curl --create-dirs -sSLo $HOME/.sonar/sonar-scanner.zip \
-          https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-$SONAR_SCANNER_VERSION-linux.zip
+      - curl --create-dirs -sSLo $HOME/.sonar/sonar-scanner.zip https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-$SONAR_SCANNER_VERSION-linux.zip
       - unzip -o $HOME/.sonar/sonar-scanner.zip -d $HOME/.sonar/
       - export PATH=$SONAR_SCANNER_HOME/bin:$PATH
 
   build:
     commands:
-      - echo "=== Build phase: Docker image ==="
+      - echo "=== BUILD: Docker image ==="
       - cd devops-projeto-swiggy/Swiggy_clone
 
       - echo "Sanitizing environment variables..."
@@ -58,27 +52,21 @@ phases:
       - export DOCKER_REGISTRY_USERNAME=$(echo "$DOCKER_REGISTRY_USERNAME" | tr -d '\n')
       - export DOCKER_REGISTRY_PASSWORD=$(echo "$DOCKER_REGISTRY_PASSWORD" | tr -d '\n')
 
-      - echo "$DOCKER_REGISTRY_PASSWORD" | docker login \
-          -u "$DOCKER_REGISTRY_USERNAME" \
-          --password-stdin "$DOCKER_REGISTRY_URL"
+      - echo "$DOCKER_REGISTRY_PASSWORD" | docker login -u "$DOCKER_REGISTRY_USERNAME" --password-stdin "$DOCKER_REGISTRY_URL"
 
       - docker build -t "$DOCKER_REGISTRY_URL/$DOCKER_REGISTRY_USERNAME/swiggy:latest" .
       - docker push "$DOCKER_REGISTRY_URL/$DOCKER_REGISTRY_USERNAME/swiggy:latest"
 
   post_build:
     commands:
-      - echo "=== Post-build: Image scan & code quality ==="
+      - echo "=== POST_BUILD: Image scan and SonarQube ==="
 
       - echo "Running Trivy image scan..."
       - trivy image "$DOCKER_REGISTRY_URL/$DOCKER_REGISTRY_USERNAME/swiggy:latest" > trivyimage.txt
 
       - echo "Running SonarQube analysis..."
       - cd devops-projeto-swiggy/Swiggy_clone
-      - sonar-scanner \
-          -Dsonar.projectKey=swiggy \
-          -Dsonar.sources=. \
-          -Dsonar.host.url=http://54.226.236.61:9000 \
-          -Dsonar.login=$SONAR_TOKEN
+      - sonar-scanner -Dsonar.projectKey=swiggy -Dsonar.sources=. -Dsonar.host.url=http://54.226.236.61:9000 -Dsonar.login=$SONAR_TOKEN
 
       - echo "Build completed successfully!"
 
@@ -86,4 +74,3 @@ artifacts:
   files:
     - devops-projeto-swiggy/Swiggy_clone/appspec.yaml
   discard-paths: yes
-
