@@ -55,11 +55,9 @@ phases:
       - echo "=== POST_BUILD: Image scan and SonarQube ==="
       - echo "Running Trivy image scan..."
       - trivy image "$DOCKER_REGISTRY_URL/$DOCKER_REGISTRY_USERNAME/swiggy:latest" > trivyimage.txt
-
       - echo "Running SonarQube analysis..."
       - cd devops-projeto-swiggy/Swiggy_clone
       - sonar-scanner -Dsonar.projectKey=swiggy -Dsonar.sources=. -Dsonar.host.url=http://54.226.236.61:9000 -Dsonar.login=$SONAR_TOKEN
-
       - echo "Build completed successfully!"
 
 artifacts:
