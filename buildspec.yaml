@@ -7,63 +7,83 @@ env:
     DOCKER_REGISTRY_URL: /cicd/docker-registry/url
     SONAR_TOKEN: /cicd/sonar/sonar-token
     NVD_API_KEY: /security/nvd_api_key
+
 phases:
   install:
     runtime-versions:
       python: 3.11
       java: corretto17
+
   pre_build:
     commands:
-      - echo "Installing dependencies..."
-      - echo "Performing Trivy file scan before building the image..."
+      - echo "=== Pre-build: Security scans (shift-left) ==="
+
+      - echo "Running Trivy filesystem scan..."
       - cd devops-projeto-swiggy/Swiggy_clone
       - wget https://github.com/aquasecurity/trivy/releases/download/v0.19.2/trivy_0.19.2_Linux-64bit.tar.gz
       - tar zxvf trivy_0.19.2_Linux-64bit.tar.gz
       - export PATH=$PATH:$PWD
-      - trivy filesystem --exit-code 0 --no-progress . >> trivyfilescan.txt
+      - trivy filesystem --exit-code 0 --no-progress . > trivyfilescan.txt
       - cd ../..
-      - echo "Downloading and installing OWASP Dependency-Check..."
+
+      - echo "Installing OWASP Dependency-Check..."
       - wget https://github.com/jeremylong/DependencyCheck/releases/download/v10.0.4/dependency-check-10.0.4-release.zip
-      - unzip dependency-check-10.0.4-release.zip
+      - unzip -q dependency-check-10.0.4-release.zip
+
+      - echo "Running OWASP Dependency-Check scan..."
+      - cd dependency-check/bin
+      - ./dependency-check.sh \
+          --scan ../../devops-projeto-swiggy/Swiggy_clone \
+          --format ALL \
+          --nvdApiKey $NVD_API_KEY \
+          --failOnCVSS 11 \
+          --disableRetireJS
+      - cd ../..
+
+      - echo "Installing Sonar Scanner..."
       - export SONAR_SCANNER_VERSION=4.7.0.2747
       - export SONAR_SCANNER_HOME=$HOME/.sonar/sonar-scanner-$SONAR_SCANNER_VERSION-linux
-      - curl --create-dirs -sSLo $HOME/.sonar/sonar-scanner.zip https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-$SONAR_SCANNER_VERSION-linux.zip
+      - curl --create-dirs -sSLo $HOME/.sonar/sonar-scanner.zip \
+          https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-$SONAR_SCANNER_VERSION-linux.zip
       - unzip -o $HOME/.sonar/sonar-scanner.zip -d $HOME/.sonar/
       - export PATH=$SONAR_SCANNER_HOME/bin:$PATH
-      - export SONAR_SCANNER_OPTS="-server"
 
   build:
     commands:
-      - echo "Running tests..."
-      - echo "Building Docker image..."
+      - echo "=== Build phase: Docker image ==="
       - cd devops-projeto-swiggy/Swiggy_clone
+
       - echo "Sanitizing environment variables..."
       - export DOCKER_REGISTRY_URL=$(echo "$DOCKER_REGISTRY_URL" | tr -d '\n')
       - export DOCKER_REGISTRY_USERNAME=$(echo "$DOCKER_REGISTRY_USERNAME" | tr -d '\n')
       - export DOCKER_REGISTRY_PASSWORD=$(echo "$DOCKER_REGISTRY_PASSWORD" | tr -d '\n')
-      - echo "URL=[$DOCKER_REGISTRY_URL]"
-      - echo "USER=[$DOCKER_REGISTRY_USERNAME]"
-      - echo "$DOCKER_REGISTRY_PASSWORD" | docker login -u "$DOCKER_REGISTRY_USERNAME" --password-stdin "$DOCKER_REGISTRY_URL"
+
+      - echo "$DOCKER_REGISTRY_PASSWORD" | docker login \
+          -u "$DOCKER_REGISTRY_USERNAME" \
+          --password-stdin "$DOCKER_REGISTRY_URL"
+
       - docker build -t "$DOCKER_REGISTRY_URL/$DOCKER_REGISTRY_USERNAME/swiggy:latest" .
       - docker push "$DOCKER_REGISTRY_URL/$DOCKER_REGISTRY_USERNAME/swiggy:latest"
+
   post_build:
     commands:
-      - echo "Performing Trivy image scan after building the image..."
-      - trivy image "$DOCKER_REGISTRY_USERNAME/swiggy:latest" >> trivyimage.txt
-      - echo "Running OWASP Dependency-Check scan..."
-      - cd ../..
-      - cd dependency-check/bin
-      - ./dependency-check.sh --scan ../../devops-projeto-swiggy/Swiggy_clone --format ALL --noupdate
-      - cd ../..
-      - echo "Running SonarQube analysis"
-      - cd devops-projeto-swiggy/Swiggy_clone
-      - sonar-scanner -Dsonar.projectKey=swiggy -Dsonar.sources=. -Dsonar.host.url=http://54.226.236.61:9000/ -Dsonar.login=$SONAR_TOKEN
-      - echo "Build completed successfully!"
-      # OPTIONAL: Descomente a linha abaixo para receber emails de notificação (requer configuração do SES)
-      # - aws ses send-email --from "seu-email@example.com" --to "seu-email@example.com" --subject "CodeBuild Status: $CODEBUILD_BUILD_ID" --text "Build status: $CODEBUILD_BUILD_STATUS" --region "us-east-1"
+      - echo "=== Post-build: Image scan & code quality ==="
 
+      - echo "Running Trivy image scan..."
+      - trivy image "$DOCKER_REGISTRY_URL/$DOCKER_REGISTRY_USERNAME/swiggy:latest" > trivyimage.txt
+
+      - echo "Running SonarQube analysis..."
+      - cd devops-projeto-swiggy/Swiggy_clone
+      - sonar-scanner \
+          -Dsonar.projectKey=swiggy \
+          -Dsonar.sources=. \
+          -Dsonar.host.url=http://54.226.236.61:9000 \
+          -Dsonar.login=$SONAR_TOKEN
+
+      - echo "Build completed successfully!"
 
 artifacts:
   files:
     - devops-projeto-swiggy/Swiggy_clone/appspec.yaml
   discard-paths: yes
+
