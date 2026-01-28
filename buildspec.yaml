@@ -16,8 +16,8 @@ phases:
 
   pre_build:
     commands:
-      # Use aspas simples (') por fora para proteger os dois pontos (:) dentro do texto
-      - echo '=== PRE_BUILD: Security scans (Shift Left) ==='
+      # REMOVI OS DOIS PONTOS DOS TITULOS PARA EVITAR ERRO DE YAML
+      - echo "--- PRE_BUILD Security scans Shift Left ---"
       - echo "Running Trivy filesystem scan..."
       - cd devops-projeto-swiggy/Swiggy_clone
       - wget https://github.com/aquasecurity/trivy/releases/download/v0.19.2/trivy_0.19.2_Linux-64bit.tar.gz
@@ -32,7 +32,6 @@ phases:
       
       - echo "Running OWASP Dependency-Check scan..."
       - cd dependency-check/bin
-      # Nota: --failOnCVSS 11 significa que só falha se for maior que 10 (basicamente nunca quebra o build, apenas reporta)
       - ./dependency-check.sh --scan ../../devops-projeto-swiggy/Swiggy_clone --format ALL --nvdApiKey $NVD_API_KEY --failOnCVSS 11 --disableRetireJS
       - cd ../..
       
@@ -41,11 +40,10 @@ phases:
       - export SONAR_SCANNER_HOME=$HOME/.sonar/sonar-scanner-$SONAR_SCANNER_VERSION-linux
       - curl --create-dirs -sSLo $HOME/.sonar/sonar-scanner.zip https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-$SONAR_SCANNER_VERSION-linux.zip
       - unzip -o $HOME/.sonar/sonar-scanner.zip -d $HOME/.sonar/
-      # O PATH exportado aqui só vale para esta fase (pre_build)
 
   build:
     commands:
-      - echo '=== BUILD: Docker image ==='
+      - echo "--- BUILD Docker image ---"
       - cd devops-projeto-swiggy/Swiggy_clone
       - echo "Sanitizing environment variables..."
       - export DOCKER_REGISTRY_URL=$(echo "$DOCKER_REGISTRY_URL" | tr -d '\n')
@@ -57,17 +55,15 @@ phases:
 
   post_build:
     commands:
-      - echo '=== POST_BUILD: Image scan and SonarQube ==='
+      - echo "--- POST_BUILD Image scan and SonarQube ---"
       - echo "Running Trivy image scan..."
-      # Instala trivy novamente ou usa caminho relativo se o binário persistiu, mas é mais seguro baixar ou garantir PATH
-      # Assumindo que o binário ficou na pasta do clone no pre_build, precisamos achá-lo ou chamar via docker se possível.
-      # Para simplificar, vamos usar a imagem docker do trivy ou assumir que o wget anterior persistiu no disco:
       - cd devops-projeto-swiggy/Swiggy_clone
+      # Re-adicionando o PATH para garantir que o trivy funcione aqui
       - export PATH=$PATH:$PWD
       - trivy image "$DOCKER_REGISTRY_URL/$DOCKER_REGISTRY_USERNAME/swiggy:latest" > trivyimage.txt
       
       - echo "Running SonarQube analysis..."
-      # RECONFIGURANDO O PATH DO SONAR (Pois o export do pre_build foi perdido na troca de fase)
+      # Re-configurando variaveis do Sonar pois elas se perdem entre fases
       - export SONAR_SCANNER_VERSION=4.7.0.2747
       - export SONAR_SCANNER_HOME=$HOME/.sonar/sonar-scanner-$SONAR_SCANNER_VERSION-linux
       - export PATH=$SONAR_SCANNER_HOME/bin:$PATH
