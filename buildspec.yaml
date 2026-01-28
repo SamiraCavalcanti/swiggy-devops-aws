@@ -6,6 +6,7 @@ env:
     DOCKER_REGISTRY_PASSWORD: /cicd/docker-credenciais/password
     DOCKER_REGISTRY_URL: /cicd/docker-registry/url
     SONAR_TOKEN: /cicd/sonar/sonar-token
+    NVD_API_KEY: /security/nvd_api_key
 phases:
   install:
     runtime-versions:
@@ -22,8 +23,8 @@ phases:
       - trivy filesystem --exit-code 0 --no-progress . >> trivyfilescan.txt
       - cd ../..
       - echo "Downloading and installing OWASP Dependency-Check..."
-      - wget https://github.com/jeremylong/DependencyCheck/releases/download/v7.0.2/dependency-check-7.0.2-release.zip
-      - unzip dependency-check-7.0.2-release.zip
+      - wget https://github.com/jeremylong/DependencyCheck/releases/download/v10.0.4/dependency-check-10.0.4-release.zip
+      - unzip dependency-check-10.0.4-release.zip
       - export SONAR_SCANNER_VERSION=4.7.0.2747
       - export SONAR_SCANNER_HOME=$HOME/.sonar/sonar-scanner-$SONAR_SCANNER_VERSION-linux
       - curl --create-dirs -sSLo $HOME/.sonar/sonar-scanner.zip https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-$SONAR_SCANNER_VERSION-linux.zip
@@ -52,7 +53,7 @@ phases:
       - echo "Running OWASP Dependency-Check scan..."
       - cd ../..
       - cd dependency-check/bin
-      - ./dependency-check.sh --scan ../../devops-projeto-swiggy/Swiggy_clone --format ALL
+      - ./dependency-check.sh --scan ../../devops-projeto-swiggy/Swiggy_clone --format ALL --nvdApiKey $NVD_API_KEY
       - cd ../..
       - echo "Running SonarQube analysis"
       - cd devops-projeto-swiggy/Swiggy_clone
