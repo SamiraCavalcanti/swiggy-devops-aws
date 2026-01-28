@@ -53,7 +53,7 @@ phases:
       - echo "Running OWASP Dependency-Check scan..."
       - cd ../..
       - cd dependency-check/bin
-      - ./dependency-check.sh --scan ../../devops-projeto-swiggy/Swiggy_clone --format ALL --nvdApiKey $NVD_API_KEY
+      - ./dependency-check.sh --scan ../../devops-projeto-swiggy/Swiggy_clone --format ALL --noupdate
       - cd ../..
       - echo "Running SonarQube analysis"
       - cd devops-projeto-swiggy/Swiggy_clone
