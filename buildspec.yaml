@@ -17,7 +17,6 @@ phases:
   pre_build:
     commands:
       - echo "=== PRE_BUILD: Security scans (Shift Left) ==="
-
       - echo "Running Trivy filesystem scan..."
       - cd devops-projeto-swiggy/Swiggy_clone
       - wget https://github.com/aquasecurity/trivy/releases/download/v0.19.2/trivy_0.19.2_Linux-64bit.tar.gz
@@ -25,16 +24,13 @@ phases:
       - export PATH=$PATH:$PWD
       - trivy filesystem --exit-code 0 --no-progress . > trivyfilescan.txt
       - cd ../..
-
       - echo "Installing OWASP Dependency-Check..."
       - wget https://github.com/jeremylong/DependencyCheck/releases/download/v10.0.4/dependency-check-10.0.4-release.zip
       - unzip -q dependency-check-10.0.4-release.zip
-
       - echo "Running OWASP Dependency-Check scan..."
       - cd dependency-check/bin
       - ./dependency-check.sh --scan ../../devops-projeto-swiggy/Swiggy_clone --format ALL --nvdApiKey $NVD_API_KEY --failOnCVSS 11 --disableRetireJS
       - cd ../..
-
       - echo "Installing Sonar Scanner..."
       - export SONAR_SCANNER_VERSION=4.7.0.2747
       - export SONAR_SCANNER_HOME=$HOME/.sonar/sonar-scanner-$SONAR_SCANNER_VERSION-linux
@@ -46,21 +42,17 @@ phases:
     commands:
       - echo "=== BUILD: Docker image ==="
       - cd devops-projeto-swiggy/Swiggy_clone
-
       - echo "Sanitizing environment variables..."
       - export DOCKER_REGISTRY_URL=$(echo "$DOCKER_REGISTRY_URL" | tr -d '\n')
       - export DOCKER_REGISTRY_USERNAME=$(echo "$DOCKER_REGISTRY_USERNAME" | tr -d '\n')
       - export DOCKER_REGISTRY_PASSWORD=$(echo "$DOCKER_REGISTRY_PASSWORD" | tr -d '\n')
-
       - echo "$DOCKER_REGISTRY_PASSWORD" | docker login -u "$DOCKER_REGISTRY_USERNAME" --password-stdin "$DOCKER_REGISTRY_URL"
-
       - docker build -t "$DOCKER_REGISTRY_URL/$DOCKER_REGISTRY_USERNAME/swiggy:latest" .
       - docker push "$DOCKER_REGISTRY_URL/$DOCKER_REGISTRY_USERNAME/swiggy:latest"
 
   post_build:
     commands:
       - echo "=== POST_BUILD: Image scan and SonarQube ==="
-
       - echo "Running Trivy image scan..."
       - trivy image "$DOCKER_REGISTRY_URL/$DOCKER_REGISTRY_USERNAME/swiggy:latest" > trivyimage.txt
 
