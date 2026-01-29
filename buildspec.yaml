@@ -35,6 +35,8 @@ phases:
       
       - echo "Installing project dependencies..."
       - cd devops-projeto-swiggy/Swiggy_clone
+      - pwd
+      - ls -la package.json
       - npm install
       - cd ../..
       
