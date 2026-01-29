@@ -13,11 +13,13 @@ phases:
     runtime-versions:
       python: 3.11
       java: corretto17
+      nodejs: 18 # ADICIONADO: Necessário para rodar npm install corretamente
 
   pre_build:
     commands:
-      # REMOVI OS DOIS PONTOS DOS TITULOS PARA EVITAR ERRO DE YAML
       - echo "--- PRE_BUILD Security scans Shift Left ---"
+      
+      # --- TRIVY SCAN ---
       - echo "Running Trivy filesystem scan..."
       - cd devops-projeto-swiggy/Swiggy_clone
       - wget https://github.com/aquasecurity/trivy/releases/download/v0.19.2/trivy_0.19.2_Linux-64bit.tar.gz
@@ -26,18 +28,25 @@ phases:
       - trivy filesystem --exit-code 0 --no-progress . > trivyfilescan.txt
       - cd ../..
       
+      # --- DEPENDENCY CHECK ---
       - echo "Installing OWASP Dependency-Check..."
       - wget https://github.com/jeremylong/DependencyCheck/releases/download/v12.1.0/dependency-check-12.1.0-release.zip
       - unzip -q dependency-check-12.1.0-release.zip
+      
+      # CORREÇÃO AQUI: Instalação segura das dependências
       - echo "Installing project dependencies..."
-      - cd devops-projeto-swiggy/Swiggy_clone
-      - npm install
+      # O uso de '&&' garante que o npm install só rode DENTRO da pasta
+      - cd devops-projeto-swiggy/Swiggy_clone && npm install
+      
+      # Voltar para a raiz para rodar o scanner (que está na raiz)
       - cd ../..
+      
       - echo "Running OWASP Dependency-Check scan..."
       - cd dependency-check/bin
       - ./dependency-check.sh --scan ../../devops-projeto-swiggy/Swiggy_clone --format ALL --nvdApiKey $NVD_API_KEY --failOnCVSS 11 --disableRetireJS --disableOssIndex
       - cd ../..
       
+      # --- SONAR SCANNER ---
       - echo "Installing Sonar Scanner..."
       - export SONAR_SCANNER_VERSION=4.7.0.2747
       - export SONAR_SCANNER_HOME=$HOME/.sonar/sonar-scanner-$SONAR_SCANNER_VERSION-linux
@@ -61,12 +70,10 @@ phases:
       - echo "--- POST_BUILD Image scan and SonarQube ---"
       - echo "Running Trivy image scan..."
       - cd devops-projeto-swiggy/Swiggy_clone
-      # Re-adicionando o PATH para garantir que o trivy funcione aqui
       - export PATH=$PATH:$PWD
       - trivy image "$DOCKER_REGISTRY_URL/$DOCKER_REGISTRY_USERNAME/swiggy:latest" > trivyimage.txt
       
       - echo "Running SonarQube analysis..."
-      # Re-configurando variaveis do Sonar pois elas se perdem entre fases
       - export SONAR_SCANNER_VERSION=4.7.0.2747
       - export SONAR_SCANNER_HOME=$HOME/.sonar/sonar-scanner-$SONAR_SCANNER_VERSION-linux
       - export PATH=$SONAR_SCANNER_HOME/bin:$PATH
