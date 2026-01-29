@@ -33,12 +33,9 @@ phases:
       - wget https://github.com/jeremylong/DependencyCheck/releases/download/v12.1.0/dependency-check-12.1.0-release.zip
       - unzip -q dependency-check-12.1.0-release.zip
       
-      # CORREÇÃO AQUI: Instalação segura das dependências
       - echo "Installing project dependencies..."
-      # O uso de '&&' garante que o npm install só rode DENTRO da pasta
-      - cd devops-projeto-swiggy/Swiggy_clone && npm install
-      
-      # Voltar para a raiz para rodar o scanner (que está na raiz)
+      - cd devops-projeto-swiggy/Swiggy_clone
+      - npm install
       - cd ../..
       
       - echo "Running OWASP Dependency-Check scan..."
