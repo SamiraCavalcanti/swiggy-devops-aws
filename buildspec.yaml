@@ -29,10 +29,10 @@ phases:
       - echo "Installing OWASP Dependency-Check..."
       - wget https://github.com/jeremylong/DependencyCheck/releases/download/v12.1.0/dependency-check-12.1.0-release.zip
       - unzip -q dependency-check-12.1.0-release.zip
-      
-
       - echo "Installing project dependencies..."
+      - cd devops-projeto-swiggy/Swiggy_clone
       - npm install
+      - cd ../..
       - echo "Running OWASP Dependency-Check scan..."
       - cd dependency-check/bin
       - ./dependency-check.sh --scan ../../devops-projeto-swiggy/Swiggy_clone --format ALL --nvdApiKey $NVD_API_KEY --failOnCVSS 11 --disableRetireJS --disableOssIndex
