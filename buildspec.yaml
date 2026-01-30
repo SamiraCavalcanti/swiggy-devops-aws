@@ -33,6 +33,7 @@ phases:
       - wget https://github.com/jeremylong/DependencyCheck/releases/download/v12.1.0/dependency-check-12.1.0-release.zip
       - unzip -q dependency-check-12.1.0-release.zip
       
+
       - echo "Installing project dependencies..."
       - cd devops-projeto-swiggy/Swiggy_clone
       - pwd
@@ -68,6 +69,9 @@ phases:
     commands:
       - echo "--- POST_BUILD Image scan and SonarQube ---"
       - echo "Running Trivy image scan..."
+      - pwd
+      - ls -la
+      - ls -la devops-projeto-swiggy/ || echo "devops-projeto-swiggy não existe!"
       - cd devops-projeto-swiggy/Swiggy_clone
       - export PATH=$PATH:$PWD
       - trivy image "$DOCKER_REGISTRY_URL/$DOCKER_REGISTRY_USERNAME/swiggy:latest" > trivyimage.txt
