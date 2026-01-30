@@ -69,10 +69,6 @@ phases:
     commands:
       - echo "--- POST_BUILD Image scan and SonarQube ---"
       - echo "Running Trivy image scan..."
-      - pwd
-      - ls -la
-      - ls -la devops-projeto-swiggy/ || echo "devops-projeto-swiggy não existe!"
-      - cd devops-projeto-swiggy/Swiggy_clone
       - export PATH=$PATH:$PWD
       - trivy image "$DOCKER_REGISTRY_URL/$DOCKER_REGISTRY_USERNAME/swiggy:latest" > trivyimage.txt
       
