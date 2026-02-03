@@ -77,7 +77,7 @@ phases:
       - export SONAR_SCANNER_HOME=$HOME/.sonar/sonar-scanner-$SONAR_SCANNER_VERSION-linux
       - export PATH=$SONAR_SCANNER_HOME/bin:$PATH
       
-      - sonar-scanner -Dsonar.projectKey=swiggy -Dsonar.sources=. -Dsonar.host.url=http://54.160.152.114:9000 -Dsonar.login=$SONAR_TOKEN
+      - sonar-scanner -Dsonar.projectKey=swiggy -Dsonar.sources=. -Dsonar.host.url=http://34.234.91.42:9000 -Dsonar.login=$SONAR_TOKEN
       - echo "Build completed successfully!"
 
 artifacts:
